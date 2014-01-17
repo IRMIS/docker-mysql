@@ -1,18 +1,29 @@
-FROM ubuntu
+FROM ubuntu_base
 
-RUN dpkg-divert --local --rename --add /sbin/initctl
-RUN ln -s /bin/true /sbin/initctl
+# From http://docs.docker.io/en/latest/examples/mongodb/
+# we don’t want Ubuntu to complain about init not being available so we’ll divert
+# /sbin/initctl to /bin/true so it thinks everything is working.
+run dpkg-divert --local --rename --add /sbin/initctl
+run ln -s /bin/true /sbin/initctl
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
-RUN apt-get update
-RUN apt-get upgrade -y
+#Install MySQL client and server
+run apt-get -y install mysql-client mysql-server
 
-RUN apt-get -y install mysql-client mysql-server
+#Set the bind address in mysql.conf 
+run sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
-RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+add ./supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
-ADD ./startup.sh /opt/startup.sh
+run mysql_install_db
 
-EXPOSE 3306
+run	/usr/bin/mysqld_safe &
+run sleep 10s
 
-CMD ["/bin/bash", "/opt/startup.sh"]
+run echo "GRANT ALL ON *.* TO root@'%' IDENTIFIED BY '' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
+
+run killall mysqld
+run sleep 10s
+
+expose 3306
+
+cmd ["supervisord", "-n"]
