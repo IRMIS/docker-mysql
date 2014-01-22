@@ -4,7 +4,7 @@ FROM ubuntu_base
 # we don’t want Ubuntu to complain about init not being available so we’ll divert
 # /sbin/initctl to /bin/true so it thinks everything is working.
 run dpkg-divert --local --rename --add /sbin/initctl
-run ln -s /bin/true /sbin/initctl
+run ln -fs /bin/true /sbin/initctl
 
 #Install MySQL client and server
 run apt-get -y install mysql-client mysql-server
