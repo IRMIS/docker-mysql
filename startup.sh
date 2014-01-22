@@ -9,8 +9,6 @@ if [ ! -f /var/lib/mysql/ibdata1 ]; then
 
         echo "GRANT ALL ON *.* TO root@'%' IDENTIFIED BY '' WITH GRANT OPTION; FLUSH PRIVILEGES" | mysql
 
-        echo "CREATE DATABASE irmis"
-
         killall mysqld
         sleep 10s
 fi
